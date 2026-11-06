@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { db } from "./supabase";
-import { slugify } from "./format";
+import { fold, imageUrl, slugify } from "./format";
 
 export type PerfumeCard = {
   id: number;
@@ -223,7 +223,7 @@ export async function getStats() {
 /* ---------- Arama ---------- */
 export async function searchPerfumes(q: string, gender: string | null, page: number) {
   const { data, error } = await db().rpc("search_perfumes", {
-    q: q || null,
+    q: fold(q) || null,
     p_gender: gender,
     p_limit: PAGE_SIZE + 1,
     p_offset: (page - 1) * PAGE_SIZE,
@@ -231,6 +231,65 @@ export async function searchPerfumes(q: string, gender: string | null, page: num
   if (error) throw error;
   const rows = cards(data);
   return { items: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE };
+}
+
+/** Arama kutusu önerileri: önce markalar, sonra parfümler (hafif ve cache'li). */
+export type Suggestion = {
+  type: "brand" | "perfume";
+  href: string;
+  title: string;
+  sub: string;
+  image: string | null;
+};
+
+export async function suggest(q: string): Promise<Suggestion[]> {
+  const t = fold(q).slice(0, 60);
+  if (t.length < 2) return [];
+  const slug = slugify(t);
+  const [brands, perfumes] = await Promise.all([
+    slug.length >= 2
+      ? db()
+          .from("brands_mv")
+          .select("brand,brand_slug,perfume_count")
+          .like("brand_slug", `${slug}%`)
+          .order("perfume_count", { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: [] as Brand[] }),
+    db().rpc("search_perfumes", { q: t, p_gender: null, p_limit: 6, p_offset: 0 }),
+  ]);
+  const out: Suggestion[] = [];
+  for (const b of (brands.data ?? []) as Brand[]) {
+    out.push({
+      type: "brand",
+      href: `/marka/${b.brand_slug}`,
+      title: b.brand,
+      sub: `Marka · ${b.perfume_count} parfüm`,
+      image: null,
+    });
+  }
+  for (const p of cards(perfumes.data)) {
+    out.push({
+      type: "perfume",
+      href: `/parfum/${p.slug}`,
+      title: p.name,
+      sub: p.brand,
+      image: imageUrl(p.image),
+    });
+  }
+  return out;
+}
+
+/** Arama sayfasında: yazılan metne uyan markalar (yazım hatasına karşı da çalışır). */
+export async function matchingBrands(q: string) {
+  const slug = slugify(fold(q));
+  if (slug.length < 2) return [];
+  const { data } = await db()
+    .from("brands_mv")
+    .select("*")
+    .like("brand_slug", `${slug}%`)
+    .order("perfume_count", { ascending: false })
+    .limit(6);
+  return (data ?? []) as Brand[];
 }
 
 /* ---------- Sitemap ---------- */

@@ -36,21 +36,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/bul">Bulucu</Link>
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
-              <Link href="/ara">Ara</Link>
+              <Link href="/ara" className="top__search">Ara</Link>
             </nav>
           </div>
         </header>
         <main id="icerik">{children}</main>
         <footer className="foot">
-          <div className="wrap foot__in">
-            <span className="logo logo--sm">parfüm<em>bilgisi</em></span>
-            <nav className="foot__nav" aria-label="Alt menü">
+          <div className="wrap foot__grid">
+            <div className="foot__brand">
+              <span className="logo">parfüm<em>bilgisi</em></span>
+              <p>Türkçe parfüm ansiklopedisi. Notalar, akorlar ve koku aileleri; reklamsız ve hızlı.</p>
+            </div>
+            <nav aria-label="Keşfet">
+              <h2 className="foot__h">Keşfet</h2>
               <Link href="/bul">Koku Bulucu</Link>
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
-              <Link href="/kullanim-kosullari">Kullanım Koşulları</Link>
+              <Link href="/ara">Ara</Link>
             </nav>
-            <p>© {new Date().getFullYear()} Parfüm Bilgisi. Verilerin otomatik toplanması ve yeniden kullanımı yasaktır. Marka adları sahiplerine aittir.</p>
+            <nav aria-label="Bilgi">
+              <h2 className="foot__h">Bilgi</h2>
+              <Link href="/kullanim-kosullari">Kullanım Koşulları</Link>
+              <a href="mailto:parfumbilgisi@gmail.com">İletişim</a>
+            </nav>
+          </div>
+          <div className="wrap">
+            <p className="foot__legal">© {new Date().getFullYear()} Parfüm Bilgisi. Verilerin otomatik toplanması ve yeniden kullanımı yasaktır. Marka adları sahiplerine aittir.</p>
           </div>
         </footer>
       </body>

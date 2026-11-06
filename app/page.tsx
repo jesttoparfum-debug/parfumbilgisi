@@ -6,6 +6,14 @@ import { jsonLd, nf, SITE } from "@/lib/format";
 
 export const revalidate = 3600;
 
+const POPULAR = ["Sauvage", "Baccarat Rouge", "Aventus", "Oud", "Black Opium", "Libre"];
+
+const TILES = [
+  { href: "/bul", title: "Koku Bulucu", text: "Sevdiğin notaları seç, sana uygun parfümleri bulalım." },
+  { href: "/notalar", title: "Notalar", text: "Vanilyadan oud'a tüm notalar ve bu notaların baskın olduğu parfümler." },
+  { href: "/markalar", title: "Markalar", text: "A'dan Z'ye tüm markalar ve koleksiyonları." },
+];
+
 export default async function Home() {
   const [stats, brands, notes, families] = await Promise.all([
     getStats(),
@@ -47,12 +55,28 @@ export default async function Home() {
             Üst, orta ve alt notalar, akorlar ve koku aileleri. Reklamsız, hızlı, sade.
           </p>
           <SearchForm large />
+          <p className="popular">
+            <span>Popüler:</span>
+            {POPULAR.map((t) => (
+              <Link key={t} href={`/ara?q=${encodeURIComponent(t)}`}>{t}</Link>
+            ))}
+          </p>
           <dl className="stats">
             <div><dt>Parfüm</dt><dd>{nf.format(stats.perfumes)}</dd></div>
             <div><dt>Marka</dt><dd>{nf.format(stats.brands)}</dd></div>
             <div><dt>Nota</dt><dd>{nf.format(stats.notes)}</dd></div>
           </dl>
         </div>
+      </section>
+
+      <section className="wrap tiles" aria-label="Hızlı erişim">
+        {TILES.map((t) => (
+          <Link key={t.href} href={t.href} className="tile">
+            <strong>{t.title}</strong>
+            <span>{t.text}</span>
+            <em aria-hidden="true">→</em>
+          </Link>
+        ))}
       </section>
 
       {showcase.length > 0 && (

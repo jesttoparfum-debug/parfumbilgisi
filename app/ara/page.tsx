@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import SearchForm from "@/components/SearchForm";
 import { Grid } from "@/components/PerfumeCard";
 import Pager, { readPage } from "@/components/Pager";
-import { searchPerfumes } from "@/lib/data";
-import { GENDERS } from "@/lib/format";
+import Link from "next/link";
+import { matchingBrands, searchPerfumes } from "@/lib/data";
+import { GENDERS, nf } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Parfüm ara",
@@ -24,6 +25,7 @@ export default async function SearchPage({ searchParams }: Props) {
   } catch (e) {
     console.error("arama hatasi", e);
   }
+  const brands = q && page === 1 ? await matchingBrands(q).catch(() => []) : [];
   const items = result?.items ?? [];
   const hasNext = result?.hasNext ?? false;
   const params: Record<string, string> = {};
@@ -36,12 +38,30 @@ export default async function SearchPage({ searchParams }: Props) {
         <h1>{q ? <>“{q}” için sonuçlar</> : "Parfüm ara"}</h1>
       </header>
       <SearchForm q={q} gender={gender ?? ""} />
+      {brands.length > 0 && (
+        <section className="brandhit" aria-label="Eşleşen markalar">
+          <h2 className="mini-h">Markalar</h2>
+          <ul className="chips">
+            {brands.map((b) => (
+              <li key={b.brand_slug}>
+                <Link href={`/marka/${b.brand_slug}`} lang="en">
+                  {b.brand} <small>{nf.format(b.perfume_count)}</small>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {result === null ? (
         <p className="empty">Arama şu an yapılamadı. Birkaç saniye sonra tekrar dene.</p>
       ) : items.length === 0 ? (
-        <p className="empty">
-          Sonuç bulunamadı. Daha kısa bir kelime ya da sadece marka adı dene.
-        </p>
+        <div className="empty">
+          <p>“{q}” için sonuç bulunamadı. Daha kısa bir kelime ya da sadece marka adı dene.</p>
+          <p>
+            Ne aradığından emin değil misin? <Link href="/bul">Koku Bulucu</Link> ile sevdiğin notalardan
+            parfüm bulabilirsin.
+          </p>
+        </div>
       ) : (
         <>
           <Grid items={items} />

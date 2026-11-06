@@ -1,6 +1,7 @@
 import { GENDERS } from "@/lib/format";
+import SearchBox from "./SearchBox";
 
-/** JavaScript gerektirmeyen arama formu: hızlı ve güvenli. */
+/** Arama formu: JavaScript kapalıysa da çalışır; açıksa yazarken öneri gösterir. */
 export default function SearchForm({
   q = "",
   gender = "",
@@ -12,18 +13,7 @@ export default function SearchForm({
 }) {
   return (
     <form action="/ara" method="get" role="search" className={`search ${large ? "search--lg" : ""}`}>
-      <label htmlFor="q" className="sr-only">
-        Parfüm veya marka ara
-      </label>
-      <input
-        id="q"
-        name="q"
-        type="search"
-        defaultValue={q}
-        maxLength={80}
-        placeholder="Parfüm, marka… örn. Sauvage, Baccarat"
-        autoComplete="off"
-      />
+      <SearchBox defaultValue={q} placeholder="Parfüm veya marka ara… örn. Sauvage, Baccarat" />
       <select name="cinsiyet" defaultValue={gender} aria-label="Cinsiyet">
         <option value="">Tümü</option>
         {Object.entries(GENDERS).map(([k, v]) => (

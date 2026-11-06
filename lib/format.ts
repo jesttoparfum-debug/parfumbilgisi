@@ -55,3 +55,16 @@ export function initials(brand: string | null, name: string): string {
 
 /** JSON-LD'yi güvenli şekilde sayfaya gömmek için. */
 export const jsonLd = (o: unknown) => ({ __html: JSON.stringify(o).replace(/</g, "\\u003c") });
+
+/**
+ * Arama için Türkçe/aksanlı harfleri sadeleştirir ("Şişe"→"sise", "ı"→"i").
+ * Noktalama KORUNUR (veritabanındaki arama metni "l'homme" gibi tutuyor), sadece boşluklar toplanır.
+ */
+export function fold(t: string): string {
+  return [...t.normalize("NFC")]
+    .map((c) => MAP.get(c) ?? c)
+    .join("")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
