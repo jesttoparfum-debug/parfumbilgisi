@@ -2,7 +2,7 @@ import Link from "next/link";
 import SearchForm from "@/components/SearchForm";
 import { Grid } from "@/components/PerfumeCard";
 import { GUIDES, readMinutes } from "@/lib/guides";
-import { getFamilies, getShowcase, getStats, getTopBrands, getTopNotes } from "@/lib/data";
+import { getFamilies, getPopular, getShowcase, getStats, getTopBrands, getTopNotes } from "@/lib/data";
 import { jsonLd, nf, SITE } from "@/lib/format";
 
 export const revalidate = 3600;
@@ -26,7 +26,7 @@ export default async function Home() {
     getTopNotes(30),
     getFamilies(),
   ]);
-  const showcase = await getShowcase();
+  const [showcase, men, women] = await Promise.all([getShowcase(), getPopular("erkek"), getPopular("kadin")]);
 
   const ld = [{
     "@context": "https://schema.org",
@@ -90,6 +90,26 @@ export default async function Home() {
             <h2>Keşfet</h2>
           </div>
           <Grid items={showcase} />
+        </section>
+      )}
+
+      {men.length > 0 && (
+        <section className="wrap section">
+          <div className="section__head">
+            <h2>Popüler erkek parfümleri</h2>
+            <Link href="/ara?cinsiyet=erkek">Tümü →</Link>
+          </div>
+          <Grid items={men} />
+        </section>
+      )}
+
+      {women.length > 0 && (
+        <section className="wrap section">
+          <div className="section__head">
+            <h2>Popüler kadın parfümleri</h2>
+            <Link href="/ara?cinsiyet=kadin">Tümü →</Link>
+          </div>
+          <Grid items={women} />
         </section>
       )}
 

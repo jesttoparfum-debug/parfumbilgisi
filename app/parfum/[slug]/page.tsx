@@ -40,10 +40,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function NoteList({ notes }: { notes: string[] }) {
   return (
-    <ul>
+    <ul className="notes">
       {notes.map((n) => {
         const s = slugify(n);
-        return <li key={n}>{s ? <Link href={`/nota/${s}`}>{n}</Link> : n}</li>;
+        return (
+          <li key={n} style={{ ["--c" as string]: accordColor(n) }}>
+            {s ? <Link href={`/nota/${s}`}>{n}</Link> : n}
+          </li>
+        );
       })}
     </ul>
   );
@@ -57,10 +61,10 @@ export default async function PerfumePage({ params }: Props) {
   const [others, similar] = await Promise.all([getSameBrand(p.brand_slug, p.slug), getSimilar(p)]);
   const tiers = (
     [
-      ["Üst notalar", "İlk izlenim, ilk 15-30 dakika", p.top_notes],
-      ["Orta notalar", "Kokunun kalbi, birkaç saat", p.heart_notes],
-      ["Alt notalar", "Kalıcı iz, gün boyu", p.base_notes],
-    ] as [string, string, string[]][]
+      ["Üst notalar", "İlk izlenim, ilk 15-30 dakika", p.top_notes, "top"],
+      ["Orta notalar", "Kokunun kalbi, birkaç saat", p.heart_notes, "heart"],
+      ["Alt notalar", "Kalıcı iz, gün boyu", p.base_notes, "base"],
+    ] as [string, string, string[], string][]
   ).filter(([, , l]) => l.length > 0);
   const accords = [...p.accords]
     .filter((a) => a && typeof a.name === "string")
@@ -183,9 +187,9 @@ export default async function PerfumePage({ params }: Props) {
           <p className="block__hint">
             Üst, orta ve alt notaların ne anlama geldiğini <Link href="/rehber/koku-piramidi">koku piramidi rehberinde</Link> okuyabilirsin.
           </p>
-          <div className="pyramid">
-            {tiers.map(([title, hint, list]) => (
-              <div className="tier" key={title}>
+          <div className="pyr">
+            {tiers.map(([title, hint, list, key]) => (
+              <div className={`pyr__tier pyr__tier--${key}`} key={title} style={{ ["--c" as string]: accordColor(list[0]) }}>
                 <h3>
                   {title} <small>{hint}</small>
                 </h3>

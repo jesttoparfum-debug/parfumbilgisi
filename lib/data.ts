@@ -329,6 +329,46 @@ export async function matchingBrands(q: string) {
   return (data ?? []) as Brand[];
 }
 
+/* ---------- Popüler parfümler (editör seçimi) ---------- */
+/*
+ * Sitede beğeni/puan verisi yok; bu yüzden "en beğenilen" denmez.
+ * Dünyada en çok bilinen ve satılan parfümlerden elle seçilmiş bir liste, her biri için
+ * veritabanında aranır; hangisi bulunursa o gösterilir (bulunamayan atlanır).
+ */
+const POPULAR_MEN = [
+  "dior sauvage", "chanel bleu de chanel", "armani acqua di gio", "versace eros", "paco rabanne 1 million",
+  "paco rabanne invictus", "creed aventus", "jean paul gaultier le male", "hermes terre d'hermes",
+  "hugo boss bottled", "viktor rolf spicebomb", "yves saint laurent la nuit de l'homme",
+];
+const POPULAR_WOMEN = [
+  "chanel no 5", "yves saint laurent black opium", "carolina herrera good girl", "lancome la vie est belle",
+  "yves saint laurent libre", "dior miss dior", "chanel coco mademoiselle", "dior j'adore",
+  "viktor rolf flowerbomb", "mugler alien", "giorgio armani si", "marc jacobs daisy",
+];
+
+async function pickOne(q: string, gender: string): Promise<PerfumeCard | null> {
+  const { data, error } = await db().rpc("search_perfumes", { q: fold(q), p_gender: gender, p_limit: 6, p_offset: 0 });
+  if (error) return null;
+  const rows = cards(data);
+  // Orijinal sürüm (flanker değil): görselli olanlar arasında en kısa adlı
+  const pool = rows.some((r) => r.image) ? rows.filter((r) => r.image) : rows;
+  return [...pool].sort((a, b) => a.name.length - b.name.length)[0] ?? null;
+}
+
+export async function getPopular(gender: "erkek" | "kadin", limit = 8) {
+  const names = gender === "erkek" ? POPULAR_MEN : POPULAR_WOMEN;
+  const found = await Promise.all(names.map((n) => pickOne(n, gender).catch(() => null)));
+  const seen = new Set<number>();
+  const out: PerfumeCard[] = [];
+  for (const p of found) {
+    if (p && !seen.has(p.id)) {
+      seen.add(p.id);
+      out.push(p);
+    }
+  }
+  return out.slice(0, limit);
+}
+
 /* ---------- Sitemap ---------- */
 export const SITEMAP_CHUNK = 40000;
 
