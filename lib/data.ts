@@ -173,15 +173,41 @@ export async function getFamilies() {
   return (data ?? []) as Hub[];
 }
 
+/* ---------- Koku Bulucu ---------- */
+export type Bul = {
+  include: string[];
+  exclude: string[];
+  gender: string | null;
+  family: string | null;
+  season: string | null;
+};
+
+export async function bulPerfumes(f: Bul, page: number) {
+  const { data, error } = await db().rpc("bul_perfumes", {
+    p_include: f.include,
+    p_exclude: f.exclude,
+    p_gender: f.gender,
+    p_family: f.family,
+    p_season: f.season,
+    p_limit: PAGE_SIZE + 1,
+    p_offset: (page - 1) * PAGE_SIZE,
+  });
+  if (error) throw error;
+  const rows = cards(data);
+  return { items: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE };
+}
+
+export async function getNotesBySlugs(slugs: string[]) {
+  if (slugs.length === 0) return [];
+  const { data } = await db().from("notes_mv").select("*").in("slug", slugs);
+  return (data ?? []) as Hub[];
+}
+
 /* ---------- Ana sayfa ---------- */
-export async function getShowcase(brandSlugs: string[]) {
-  const { data } = await db()
-    .from("perfumes")
-    .select(CARD)
-    .in("brand_slug", brandSlugs)
-    .not("image", "is", null)
-    .eq("indexable", true)
-    .limit(12);
+export async function getShowcase() {
+  // Büyük markalardan, her markadan 1 görselli parfüm; sayfa her saat yenilendikçe değişir
+  const { data, error } = await db().rpc("showcase", { p_limit: 12 });
+  if (error) return [];
   return cards(data);
 }
 

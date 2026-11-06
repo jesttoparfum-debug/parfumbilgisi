@@ -13,9 +13,16 @@ export default async function Home() {
     getTopNotes(30),
     getFamilies(),
   ]);
-  const showcase = await getShowcase(brands.slice(0, 10).map((b) => b.brand_slug));
+  const showcase = await getShowcase();
 
-  const ld = {
+  const ld = [{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
+    logo: `${SITE.url}/icon.svg`,
+    email: "parfumbilgisi@gmail.com",
+  }, {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE.name,
@@ -26,7 +33,7 @@ export default async function Home() {
       target: `${SITE.url}/ara?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
-  };
+  }];
 
   return (
     <>

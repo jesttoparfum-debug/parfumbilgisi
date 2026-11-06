@@ -20,6 +20,8 @@ export default async function sitemap({ id }: { id: number | Promise<number> }):
       { url: SITE.url, priority: 1 },
       u("/markalar"),
       u("/notalar"),
+      u("/bul"),
+      u("/kullanim-kosullari"),
       ...families.map((f) => u(`/aile/${f.slug}`)),
       ...notes.map((x) => u(`/nota/${x.slug}`)),
       ...brands.map((b) => u(`/marka/${b}`)),

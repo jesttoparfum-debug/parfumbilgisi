@@ -26,7 +26,8 @@ export default async function BrandPage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const b = await getBrand(slug);
   if (!b) notFound();
-  const maxPage = Math.max(1, Math.ceil(b.perfume_count / PAGE_SIZE));
+  // Toplu çekmeyi zorlaştırmak için en fazla 200 sayfa
+  const maxPage = Math.min(200, Math.max(1, Math.ceil(b.perfume_count / PAGE_SIZE)));
   const page = readPage(sp.sayfa, maxPage);
   return (
     <HubPage

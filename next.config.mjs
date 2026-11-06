@@ -23,6 +23,11 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  // Metin ve veri madenciliği hakkı saklıdır (AB DSM Direktifi md. 4, TDMRep standardı)
+  { key: "tdm-reservation", value: "1" },
+  { key: "tdm-policy", value: "https://parfumbilgisi.com/kullanim-kosullari" },
+  // Yapay zekâ eğitimine kapalı (bunu tanıyan botlar için)
+  { key: "X-Robots-Tag", value: "noai, noimageai" },
 ];
 
 /** @type {import('next').NextConfig} */

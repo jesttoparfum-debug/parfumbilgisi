@@ -406,6 +406,92 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------
+-- 5c) Ana sayfa vitrini: büyük markalardan, her markadan 1 görselli parfüm
+-- ---------------------------------------------------------------------
+drop function if exists public.showcase(int);
+create function public.showcase(p_limit int default 12)
+returns table (
+  id bigint, slug text, name text, brand text, brand_slug text,
+  year smallint, gender text, image text, family text
+)
+language sql
+volatile
+set search_path = public, extensions
+as $$
+  select x.id, x.slug, x.name, x.brand, x.brand_slug, x.year, x.gender, x.image, x.family
+  from (
+    select distinct on (p.brand_slug) p.*
+    from public.perfumes p
+    join (select brand_slug from public.brands_mv order by perfume_count desc limit 80) b
+      on b.brand_slug = p.brand_slug
+    where p.image is not null and p.indexable
+    order by p.brand_slug, random()
+  ) x
+  order by random()
+  limit least(greatest(p_limit, 1), 24);
+$$;
+
+-- ---------------------------------------------------------------------
+-- 5d) Koku Bulucu: istenen/istenmeyen notalar + cinsiyet, aile, mevsim
+--     İstenen nota varsa en nadir olanı üzerinden, yoğunluk sırasıyla gelir.
+-- ---------------------------------------------------------------------
+drop function if exists public.bul_perfumes(text[], text[], text, text, text, int, int);
+create function public.bul_perfumes(
+  p_include text[] default '{}',
+  p_exclude text[] default '{}',
+  p_gender  text   default null,
+  p_family  text   default null,
+  p_season  text   default null,
+  p_limit   int    default 24,
+  p_offset  int    default 0
+)
+returns table (
+  id bigint, slug text, name text, brand text, brand_slug text,
+  year smallint, gender text, image text, family text
+)
+language plpgsql
+stable
+set search_path = public, extensions
+as $$
+declare
+  inc text[] := coalesce(p_include[1:5], '{}');
+  exc text[] := coalesce(p_exclude[1:5], '{}');
+  lim int    := least(greatest(p_limit, 1), 50);
+  off int    := least(greatest(p_offset, 0), 480);
+  drv text;
+begin
+  if cardinality(inc) > 0 then
+    select n.slug into drv from public.notes_mv n
+     where n.slug = any(inc) order by n.perfume_count asc limit 1;
+    if drv is null then return; end if;
+    return query
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image, p.family
+      from public.note_rank_mv r
+      join public.perfumes p on p.id = r.perfume_id
+      where r.note_slug = drv
+        and p.all_note_slugs @> inc
+        and not (p.all_note_slugs && exc)
+        and (p_gender is null or p.gender = p_gender)
+        and (p_family is null or p.family_slug = p_family)
+        and (p_season is null or lower(p.season) like '%' || lower(p_season) || '%')
+      order by r.score desc, r.perfume_id
+      limit lim offset off;
+  else
+    return query
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image, p.family
+      from public.perfumes p
+      where p.indexable
+        and not (p.all_note_slugs && exc)
+        and (p_gender is null or p.gender = p_gender)
+        and (p_family is null or p.family_slug = p_family)
+        and (p_season is null or lower(p.season) like '%' || lower(p_season) || '%')
+      order by p.id
+      limit lim offset off;
+  end if;
+end
+$$;
+
+-- ---------------------------------------------------------------------
 -- 6) Görsel deposu (herkes görebilir, sadece sen yükleyebilirsin)
 -- ---------------------------------------------------------------------
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -441,6 +527,10 @@ revoke all on function public.search_perfumes(text, text, int, int) from public;
 grant execute on function public.search_perfumes(text, text, int, int) to anon;
 revoke all on function public.note_perfumes(text, int, int) from public;
 grant execute on function public.note_perfumes(text, int, int) to anon;
+revoke all on function public.showcase(int) from public;
+grant execute on function public.showcase(int) to anon;
+revoke all on function public.bul_perfumes(text[], text[], text, text, text, int, int) from public;
+grant execute on function public.bul_perfumes(text[], text[], text, text, text, int, int) to anon;
 
 -- API katmanının fonksiyon/tablo listesini yenile
 notify pgrst, 'reload schema';

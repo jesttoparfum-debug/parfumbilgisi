@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f3ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#16130f" },
+    { media: "(prefers-color-scheme: dark) and (hover: none) and (pointer: coarse)", color: "#16130f" },
+    { color: "#f7f3ec" },
   ],
 };
 
@@ -33,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               parfüm<em>bilgisi</em>
             </Link>
             <nav className="top__nav">
+              <Link href="/bul">Bulucu</Link>
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
               <Link href="/ara">Ara</Link>
@@ -43,7 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="foot">
           <div className="wrap foot__in">
             <span className="logo logo--sm">parfüm<em>bilgisi</em></span>
-            <p>Bağımsız Türkçe parfüm ansiklopedisi. Marka adları sahiplerine aittir.</p>
+            <nav className="foot__nav" aria-label="Alt menü">
+              <Link href="/bul">Koku Bulucu</Link>
+              <Link href="/notalar">Notalar</Link>
+              <Link href="/markalar">Markalar</Link>
+              <Link href="/kullanim-kosullari">Kullanım Koşulları</Link>
+            </nav>
+            <p>© {new Date().getFullYear()} Parfüm Bilgisi. Verilerin otomatik toplanması ve yeniden kullanımı yasaktır. Marka adları sahiplerine aittir.</p>
           </div>
         </footer>
       </body>
