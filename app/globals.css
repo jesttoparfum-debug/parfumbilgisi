@@ -310,6 +310,15 @@ em { font-style: italic; color: var(--gold); }
 
 /* ---------- Logo ---------- */
 .logo { display: inline-flex; align-items: center; line-height: 0; }
-.logo__img { height: 42px; width: auto; display: block; }
-.logo__img--lg { height: 56px; }
-@media (max-width: 480px) { .logo__img { height: 38px; } }
+.lg { display: inline-flex; align-items: center; gap: 0.5em; font-size: 16px; line-height: 1; }
+.lg--lg { font-size: 22px; }
+.lg__drop { height: 3.1em; width: auto; display: block; }
+.lg__col { display: flex; flex-direction: column; gap: 0.3em; align-items: flex-start; }
+.lg__pabi { height: 1.95em; width: auto; display: block; }
+.lg__tag {
+  font-family: var(--f-body), system-ui, sans-serif; font-weight: 700; font-size: 0.74em;
+  letter-spacing: 0.1em; white-space: nowrap; color: color-mix(in srgb, var(--gold) 78%, var(--ink));
+}
+@media (max-width: 480px) { .lg { font-size: 15px; } .lg--lg { font-size: 20px; } }
+/* Dar telefonlarda logo okunaklı kalsın diye üst menüde sadece "Ara" kalır (diğerleri ana sayfada ve altta). */
+@media (max-width: 420px) { .top__nav a:not(.top__search) { display: none; } }

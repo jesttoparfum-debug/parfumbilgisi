@@ -29,22 +29,25 @@ export const viewport: Viewport = {
   ],
 };
 
-/** Açık temada koyu yazılı, koyu temada (telefon + koyu mod) krem yazılı logo. */
-function Logo({ small = false }: { small?: boolean }) {
+/**
+ * Damla + "PaBi" görseli, altında canlı metin olarak adres (net ve okunaklı).
+ * Açık temada koyu yazılı, koyu temada (telefon + koyu mod) krem yazılı "PaBi".
+ */
+function Logo({ large = false }: { large?: boolean }) {
   return (
-    <picture>
-      <source
-        srcSet="/logo-dark.png"
-        media="(prefers-color-scheme: dark) and (hover: none) and (pointer: coarse)"
-      />
-      <img
-        src="/logo-light.png"
-        alt="Parfüm Bilgisi"
-        width={small ? 138 : 103}
-        height={small ? 56 : 42}
-        className={small ? "logo__img logo__img--lg" : "logo__img"}
-      />
-    </picture>
+    <span className={`lg ${large ? "lg--lg" : ""}`}>
+      <img src="/damla.png" alt="" width={39} height={60} className="lg__drop" />
+      <span className="lg__col">
+        <picture>
+          <source
+            srcSet="/pabi-dark.png"
+            media="(prefers-color-scheme: dark) and (hover: none) and (pointer: coarse)"
+          />
+          <img src="/pabi-light.png" alt="PaBi" width={86} height={32} className="lg__pabi" />
+        </picture>
+        <span className="lg__tag" aria-hidden="true">PARFÜMBİLGİSİ.COM</span>
+      </span>
+    </span>
   );
 }
 
@@ -69,7 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="foot">
           <div className="wrap foot__grid">
             <div className="foot__brand">
-              <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa"><Logo small /></Link>
+              <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa"><Logo large /></Link>
               <p>Sevdiğin kokunun notalarını, akorlarını ve ailesini keşfet. Reklamsız, hızlı, sade.</p>
             </div>
             <nav aria-label="Keşfet">
