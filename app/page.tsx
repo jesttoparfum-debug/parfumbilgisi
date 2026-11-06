@@ -12,6 +12,7 @@ const TILES = [
   { href: "/bul", title: "Koku Bulucu", text: "Sevdiğin notaları seç, sana uygun parfümleri bulalım." },
   { href: "/notalar", title: "Notalar", text: "Vanilyadan oud'a tüm notalar ve bu notaların baskın olduğu parfümler." },
   { href: "/markalar", title: "Markalar", text: "A'dan Z'ye tüm markalar ve koleksiyonları." },
+  { href: "/parfumorler", title: "Parfümörler", text: "Kokuları yaratan burunlar ve imzalarını taşıyan parfümler." },
 ];
 
 export default async function Home() {

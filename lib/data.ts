@@ -149,6 +149,41 @@ export async function getTopNotes(limit: number, min = 1) {
   return out;
 }
 
+/* ---------- Parfümör ---------- */
+export const getPerfumer = cache(async (slug: string): Promise<Hub | null> => {
+  if (!isSlug(slug)) return null;
+  const { data, error } = await db().from("perfumers_mv").select("*").eq("slug", slug).maybeSingle();
+  if (error) return null;
+  return data as Hub | null;
+});
+
+export async function getPerfumerPerfumes(slug: string, page: number) {
+  const { data, error } = await db().rpc("perfumer_perfumes", {
+    p_slug: slug,
+    p_limit: PAGE_SIZE,
+    p_offset: (page - 1) * PAGE_SIZE,
+  });
+  if (error) throw error;
+  return cards(data);
+}
+
+/** En çok parfümü olan parfümörler (tablo henüz kurulmadıysa boş liste döner). */
+export async function getTopPerfumers(limit: number, min = 1) {
+  const out: Hub[] = [];
+  for (let from = 0; from < limit; from += 1000) {
+    const { data, error } = await db()
+      .from("perfumers_mv")
+      .select("*")
+      .gte("perfume_count", min)
+      .order("perfume_count", { ascending: false })
+      .range(from, Math.min(from + 999, limit - 1));
+    if (error || !data?.length) break;
+    out.push(...(data as Hub[]));
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+
 /* ---------- Koku ailesi ---------- */
 export const getFamily = cache(async (slug: string): Promise<Hub | null> => {
   if (!isSlug(slug)) return null;

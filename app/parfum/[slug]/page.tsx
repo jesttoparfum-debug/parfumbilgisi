@@ -125,7 +125,16 @@ export default async function PerfumePage({ params }: Props) {
           )}
           {p.perfumers.length > 0 && (
             <p className="perfumers">
-              <span>Parfümör</span> {p.perfumers.join(", ")}
+              <span>{p.perfumers.length > 1 ? "Parfümörler" : "Parfümör"}</span>
+              {p.perfumers.map((n, i) => {
+                const s = slugify(n);
+                return (
+                  <span className="perfumers__name" key={n}>
+                    {s ? <Link href={`/parfumor/${s}`}>{n}</Link> : n}
+                    {i < p.perfumers.length - 1 ? "," : ""}
+                  </span>
+                );
+              })}
             </p>
           )}
           {accords.length > 0 && (

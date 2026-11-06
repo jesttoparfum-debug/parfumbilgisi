@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllBrandSlugs, getFamilies, getSitemapSlugs, getTopNotes, sitemapCount } from "@/lib/data";
+import { getAllBrandSlugs, getFamilies, getSitemapSlugs, getTopNotes, getTopPerfumers, sitemapCount } from "@/lib/data";
 import { SITE } from "@/lib/format";
 
 // /sitemap/0.xml  -> ana sayfalar, markalar, notalar, aileler
@@ -15,15 +15,17 @@ export default async function sitemap({ id }: { id: number | Promise<number> }):
   const u = (p: string) => ({ url: `${SITE.url}${p}` });
 
   if (n === 0) {
-    const [brands, notes, families] = await Promise.all([getAllBrandSlugs(), getTopNotes(5000, 5), getFamilies()]);
+    const [brands, notes, families, perfumers] = await Promise.all([getAllBrandSlugs(), getTopNotes(5000, 5), getFamilies(), getTopPerfumers(5000, 3)]);
     return [
       { url: SITE.url, priority: 1 },
       u("/markalar"),
       u("/notalar"),
+      u("/parfumorler"),
       u("/bul"),
       u("/kullanim-kosullari"),
       ...families.map((f) => u(`/aile/${f.slug}`)),
       ...notes.map((x) => u(`/nota/${x.slug}`)),
+      ...perfumers.map((x) => u(`/parfumor/${x.slug}`)),
       ...brands.map((b) => u(`/marka/${b}`)),
     ];
   }

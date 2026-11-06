@@ -198,8 +198,11 @@ em { font-style: italic; color: var(--gold); }
 .facts { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 0 0 18px; }
 .facts dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); }
 .facts dd { margin: 2px 0 0; font-size: 1.05rem; }
-.perfumers { margin: 0 0 22px; color: var(--ink-2); }
-.perfumers span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin-right: 8px; }
+.perfumers { margin: 0 0 22px; color: var(--ink-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.perfumers > span:first-child { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); }
+.perfumers__name { white-space: nowrap; margin-right: 0; }
+.perfumers__name a { color: var(--ink); border-bottom: 1px solid var(--line); }
+.perfumers__name a:hover { color: var(--gold); border-color: var(--gold); }
 .accords { list-style: none; padding: 0; margin: 0; display: grid; gap: 11px; max-width: 480px; }
 .accords li { display: grid; gap: 5px; }
 .acc__top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 0.92rem; }
@@ -325,4 +328,4 @@ em { font-style: italic; color: var(--gold); }
 }
 @media (max-width: 480px) { .lg { font-size: 15px; } .lg--lg { font-size: 20px; } }
 /* Dar telefonlarda logo okunaklı kalsın diye üst menüde sadece "Ara" kalır (diğerleri ana sayfada ve altta). */
-@media (max-width: 420px) { .top__nav a:not(.top__search) { display: none; } }
+@media (max-width: 540px) { .top__nav a:not(.top__search) { display: none; } }
