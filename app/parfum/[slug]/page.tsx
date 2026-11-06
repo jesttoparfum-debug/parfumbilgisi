@@ -180,6 +180,9 @@ export default async function PerfumePage({ params }: Props) {
       {tiers.length > 0 && (
         <section className="block">
           <h2>Koku piramidi</h2>
+          <p className="block__hint">
+            Üst, orta ve alt notaların ne anlama geldiğini <Link href="/rehber/koku-piramidi">koku piramidi rehberinde</Link> okuyabilirsin.
+          </p>
           <div className="pyramid">
             {tiers.map(([title, hint, list]) => (
               <div className="tier" key={title}>

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllBrandSlugs, getFamilies, getSitemapSlugs, getTopNotes, getTopPerfumers, sitemapCount } from "@/lib/data";
 import { SITE } from "@/lib/format";
+import { GUIDES } from "@/lib/guides";
 
 // /sitemap/0.xml  -> ana sayfalar, markalar, notalar, aileler
 // /sitemap/1.xml+ -> parfümler (Google sınırı 50.000; 40.000'lik parçalar)
@@ -21,6 +22,8 @@ export default async function sitemap({ id }: { id: number | Promise<number> }):
       u("/markalar"),
       u("/notalar"),
       u("/parfumorler"),
+      { url: `${SITE.url}/rehber`, priority: 0.8 },
+      ...GUIDES.map((g) => ({ url: `${SITE.url}/rehber/${g.slug}`, lastModified: g.updated, priority: 0.7 })),
       u("/bul"),
       u("/kullanim-kosullari"),
       ...families.map((f) => u(`/aile/${f.slug}`)),

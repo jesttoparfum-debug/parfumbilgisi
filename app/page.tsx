@@ -1,10 +1,13 @@
 import Link from "next/link";
 import SearchForm from "@/components/SearchForm";
 import { Grid } from "@/components/PerfumeCard";
+import { GUIDES, readMinutes } from "@/lib/guides";
 import { getFamilies, getShowcase, getStats, getTopBrands, getTopNotes } from "@/lib/data";
 import { jsonLd, nf, SITE } from "@/lib/format";
 
 export const revalidate = 3600;
+
+const FEATURED_GUIDES = ["edp-edt-extrait-farki", "parfum-nedir", "koku-piramidi"];
 
 const POPULAR = ["Sauvage", "Baccarat Rouge", "Aventus", "Oud", "Black Opium", "Libre"];
 
@@ -13,6 +16,7 @@ const TILES = [
   { href: "/notalar", title: "Notalar", text: "Vanilyadan oud'a tüm notalar ve bu notaların baskın olduğu parfümler." },
   { href: "/markalar", title: "Markalar", text: "A'dan Z'ye tüm markalar ve koleksiyonları." },
   { href: "/parfumorler", title: "Parfümörler", text: "Kokuları yaratan burunlar ve imzalarını taşıyan parfümler." },
+  { href: "/rehber", title: "Rehber", text: "EDP mi EDT mi? Notalar, akorlar, parfüm sürme ve saklama rehberi." },
 ];
 
 export default async function Home() {
@@ -88,6 +92,26 @@ export default async function Home() {
           <Grid items={showcase} />
         </section>
       )}
+
+      <section className="wrap section">
+        <div className="section__head">
+          <h2>Rehberden</h2>
+          <Link href="/rehber">Tüm yazılar →</Link>
+        </div>
+        <ul className="guidegrid">
+          {FEATURED_GUIDES.map((slug) => GUIDES.find((g) => g.slug === slug))
+            .filter((g): g is NonNullable<typeof g> => !!g)
+            .map((g) => (
+              <li key={g.slug}>
+                <Link href={`/rehber/${g.slug}`} className="guidecard">
+                  <span className="guidecard__cat">{g.category} · {readMinutes(g)} dk</span>
+                  <strong>{g.title}</strong>
+                  <span>{g.description}</span>
+                </Link>
+              </li>
+            ))}
+        </ul>
+      </section>
 
       <section className="wrap section">
         <div className="section__head">
