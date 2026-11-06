@@ -258,7 +258,6 @@ returns table (
 language plpgsql
 stable
 set search_path = public, extensions
-set pg_trgm.similarity_threshold = 0.25
 as $$
 declare
   t   text := lower(extensions.unaccent(left(btrim(coalesce(q, '')), 80)));
@@ -351,5 +350,8 @@ revoke all on function public.j2j(text)       from public, anon, authenticated;
 revoke all on function public.slugify(text)   from anon, authenticated;
 revoke all on function public.search_perfumes(text, text, int, int) from public;
 grant execute on function public.search_perfumes(text, text, int, int) to anon;
+
+-- API katmanının fonksiyon/tablo listesini yenile
+notify pgrst, 'reload schema';
 
 select 'Kurulum tamam' as durum;
