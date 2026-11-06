@@ -85,6 +85,9 @@ create table if not exists public.perfumes (
   updated_at      timestamptz not null default now()
 );
 
+-- Cinsiyet bilgisinin kaynağı: 'veri' (orijinal) veya 'isim' (isimden kesin kuralla çıkarıldı)
+alter table public.perfumes add column if not exists gender_kaynak text;
+
 create index if not exists perfumes_brand_idx   on public.perfumes (brand_slug, indexable desc, name);
 create index if not exists perfumes_family_idx  on public.perfumes (family_slug);
 create index if not exists perfumes_notes_gin   on public.perfumes using gin (all_note_slugs);
@@ -137,6 +140,36 @@ create unique index families_mv_slug on public.families_mv (slug);
 -- ---------------------------------------------------------------------
 -- 4) Yükleme fonksiyonu: geçici tablo -> ana tablo (tekrar çalıştırılabilir)
 -- ---------------------------------------------------------------------
+-- İsimde KESİN ifade geçen ve cinsiyeti boş parfümleri tamamlar.
+-- ("Pour Homme", "For Her", "Femme", "Uomo"...). Hem kadın hem erkek ifadesi varsa dokunmaz.
+create or replace function public.cinsiyet_tamamla()
+returns int
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare adet int;
+begin
+  with ad as (
+    select id, lower(extensions.unaccent(name)) as n
+    from public.perfumes
+    where gender is null
+  ), karar as (
+    select id,
+      n ~ '\m(pour femme|for her|for women|femme|femmes|woman|women|donna|mujer|lady|ladies|girl|girls|pour elle|feminine|feminin|femenina|femenino|feminino)\M' as k,
+      n ~ '\m(pour homme|for him|for men|homme|hommes|man|men|uomo|hombre|masculin|masculine|masculino|gentleman|gentlemen|pour lui|caballero)\M' as e
+    from ad
+  )
+  update public.perfumes p
+     set gender = case when k.k then 'kadin' else 'erkek' end,
+         gender_kaynak = 'isim'
+    from karar k
+   where p.id = k.id and (k.k <> k.e);
+  get diagnostics adet = row_count;
+  return adet;
+end
+$$;
+
 create or replace function public.yukle_staging()
 returns text
 language plpgsql
@@ -148,7 +181,7 @@ begin
   insert into public.perfumes as p (
     slug, name, brand, brand_slug, gender, year, perfumers,
     top_notes, heart_notes, base_notes, all_note_slugs, accords,
-    family, family_slug, season, image, search_text, indexable
+    family, family_slug, season, image, search_text, indexable, gender_kaynak
   )
   select
     x.slug, x.name, x.brand,
@@ -162,7 +195,8 @@ begin
     x.season, x.image,
     lower(extensions.unaccent(x.brand || ' ' || x.name)),
     (cardinality(x.top) + cardinality(x.heart) + cardinality(x.base) >= 3
-      and jsonb_array_length(x.accords) > 0)
+      and jsonb_array_length(x.accords) > 0),
+    case when x.gender is not null then 'veri' end
   from (
     select
       btrim(s.slug) as slug, btrim(s.name) as name, btrim(s.brand) as brand,
@@ -192,10 +226,12 @@ begin
     all_note_slugs = excluded.all_note_slugs, accords = excluded.accords,
     family = excluded.family, family_slug = excluded.family_slug, season = excluded.season,
     image = excluded.image, search_text = excluded.search_text, indexable = excluded.indexable,
+    gender_kaynak = excluded.gender_kaynak,
     updated_at = now();
 
   get diagnostics adet = row_count;
   truncate public.staging_perfumes;
+  perform public.cinsiyet_tamamla();
   refresh materialized view public.brands_mv;
   refresh materialized view public.notes_mv;
   refresh materialized view public.families_mv;
@@ -262,6 +298,7 @@ revoke all on public.brands_mv, public.notes_mv, public.families_mv from anon, a
 grant select on public.brands_mv, public.notes_mv, public.families_mv to anon;
 
 revoke all on function public.yukle_staging() from public, anon, authenticated;
+revoke all on function public.cinsiyet_tamamla() from public, anon, authenticated;
 revoke all on function public.j2a(text)       from public, anon, authenticated;
 revoke all on function public.j2j(text)       from public, anon, authenticated;
 revoke all on function public.slugify(text)   from anon, authenticated;

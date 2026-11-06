@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Bottle from "@/components/Bottle";
 import { Grid } from "@/components/PerfumeCard";
 import { getPerfume, getSameBrand, getSimilar } from "@/lib/data";
+import { describe, metaDescription } from "@/lib/describe";
 import { genderLabel, imageUrl, jsonLd, SITE, slugify } from "@/lib/format";
 
 // Sayfalar ilk ziyarette üretilip 1 gün cache'lenir (ISR); build'de 200 bin sayfa üretilmez.
@@ -22,14 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getPerfume(slug);
   if (!p) return { title: "Parfüm bulunamadı", robots: { index: false } };
 
-  const notes = [...p.top_notes, ...p.heart_notes, ...p.base_notes].slice(0, 5);
   const title = `${fullName(p)}${p.year ? ` (${p.year})` : ""} notaları ve akorları`;
-  const parts = [
-    notes.length ? `Notalar: ${notes.join(", ")}` : "",
-    p.family ? `Koku ailesi: ${p.family}` : "",
-    genderLabel(p.gender) ? `${genderLabel(p.gender)} parfümü` : "",
-  ].filter(Boolean);
-  const description = `${fullName(p)}. ${parts.join(". ")}.`.slice(0, 158);
+  const description = metaDescription(p);
   const img = imageUrl(p.image);
 
   return {
@@ -77,6 +72,7 @@ export default async function PerfumePage({ params }: Props) {
   if (p.season) facts.push(["Mevsim", p.season]);
   if (p.year) facts.push(["Çıkış yılı", String(p.year)]);
 
+  const about = describe(p);
   const img = imageUrl(p.image);
   const ld = [
     {
@@ -85,6 +81,7 @@ export default async function PerfumePage({ params }: Props) {
       name: fullName(p),
       brand: { "@type": "Brand", name: p.brand },
       category: "Parfüm",
+      description: about.join(" "),
       url: `${SITE.url}/parfum/${p.slug}`,
       ...(img && { image: img }),
       ...(p.year && { releaseDate: String(p.year) }),
@@ -144,6 +141,11 @@ export default async function PerfumePage({ params }: Props) {
           )}
         </div>
       </div>
+
+      <section className="block">
+        <h2>Hakkında</h2>
+        <p className="prose">{about.join(" ")}</p>
+      </section>
 
       {tiers.length > 0 && (
         <section className="block">
