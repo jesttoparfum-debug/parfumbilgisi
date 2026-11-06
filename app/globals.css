@@ -200,9 +200,13 @@ em { font-style: italic; color: var(--gold); }
 .facts dd { margin: 2px 0 0; font-size: 1.05rem; }
 .perfumers { margin: 0 0 22px; color: var(--ink-2); }
 .perfumers span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin-right: 8px; }
-.accords { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; max-width: 440px; }
-.accords li { position: relative; padding: 6px 12px; border-radius: 8px; font-size: 0.92rem; text-transform: capitalize; overflow: hidden; z-index: 0; }
-.accords li::before { content: ""; position: absolute; inset: 0; width: var(--w); background: var(--gold-soft); z-index: -1; border-radius: 8px; }
+.accords { list-style: none; padding: 0; margin: 0; display: grid; gap: 11px; max-width: 480px; }
+.accords li { display: grid; gap: 5px; }
+.acc__top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 0.92rem; }
+.acc__name { text-transform: capitalize; }
+.acc__pct { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 0.85rem; }
+.acc__bar { display: block; height: 9px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.acc__bar i { display: block; height: 100%; width: var(--w); border-radius: 999px; background: var(--c, var(--gold)); }
 
 .block { margin-top: 48px; }
 .block > h2 { margin-bottom: 18px; }

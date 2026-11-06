@@ -52,7 +52,7 @@ export default async function Home() {
             Aradığın kokuyu <em>notalarından</em> bul.
           </h1>
           <p className="lead">
-            Yazmaya başla: parfümü, markayı ya da sevdiğin notayı bulalım. Üst, orta ve alt notalar, akorlar, koku aileleri; reklamsız ve hızlı.
+            Yazmaya başla: parfümü, markayı ya da sevdiğin notayı bulalım. Üst, orta ve alt notalar, akorlar ve koku aileleri.
           </p>
           <SearchForm large />
           <p className="popular">

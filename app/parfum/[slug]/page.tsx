@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Bottle from "@/components/Bottle";
 import { Grid } from "@/components/PerfumeCard";
 import { getPerfume, getSameBrand, getSimilar } from "@/lib/data";
+import { accordColor } from "@/lib/accords";
 import { describe, metaDescription } from "@/lib/describe";
 import { genderLabel, imageUrl, jsonLd, SITE, slugify } from "@/lib/format";
 
@@ -131,11 +132,21 @@ export default async function PerfumePage({ params }: Props) {
             <section aria-label="Ana akorlar">
               <h2 className="mini-h">Ana akorlar</h2>
               <ul className="accords">
-                {accords.map((a) => (
-                  <li key={a.name} style={{ ["--w" as string]: `${Math.max(12, Math.min(100, a.value ?? 0))}%` }}>
-                    {a.name}
-                  </li>
-                ))}
+                {accords.map((a) => {
+                  const v = Math.max(0, Math.min(100, a.value ?? 0));
+                  return (
+                    <li
+                      key={a.name}
+                      style={{ ["--w" as string]: `${Math.max(4, v)}%`, ["--c" as string]: accordColor(a.name) }}
+                    >
+                      <span className="acc__top">
+                        <span className="acc__name">{a.name}</span>
+                        <b className="acc__pct">{Math.round(v)}%</b>
+                      </span>
+                      <span className="acc__bar" aria-hidden="true"><i /></span>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}

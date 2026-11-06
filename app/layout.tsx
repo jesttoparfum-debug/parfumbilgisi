@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="wrap foot__grid">
             <div className="foot__brand">
               <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa"><Logo large /></Link>
-              <p>Sevdiğin kokunun notalarını, akorlarını ve ailesini keşfet. Reklamsız, hızlı, sade.</p>
+              <p>Sevdiğin kokunun notalarını, akorlarını ve ailesini keşfet.</p>
             </div>
             <nav aria-label="Keşfet">
               <h2 className="foot__h">Keşfet</h2>
