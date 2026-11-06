@@ -9,6 +9,13 @@ const body = Inter({ subsets: ["latin", "latin-ext"], variable: "--f-body", disp
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
+  icons: {
+    icon: [
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   title: { default: `${SITE.name} — Parfüm notaları ve ansiklopedisi`, template: `%s | ${SITE.name}` },
   description: SITE.description,
   openGraph: { siteName: SITE.name, locale: "tr_TR", type: "website" },
@@ -22,6 +29,25 @@ export const viewport: Viewport = {
   ],
 };
 
+/** Açık temada koyu yazılı, koyu temada (telefon + koyu mod) krem yazılı logo. */
+function Logo({ small = false }: { small?: boolean }) {
+  return (
+    <picture>
+      <source
+        srcSet="/logo-dark.png"
+        media="(prefers-color-scheme: dark) and (hover: none) and (pointer: coarse)"
+      />
+      <img
+        src="/logo-light.png"
+        alt="Parfüm Bilgisi"
+        width={small ? 143 : 108}
+        height={small ? 56 : 42}
+        className={small ? "logo__img logo__img--lg" : "logo__img"}
+      />
+    </picture>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" className={`${display.variable} ${body.variable}`}>
@@ -30,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="top">
           <div className="wrap top__in">
             <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa">
-              parfüm<em>bilgisi</em>
+              <Logo />
             </Link>
             <nav className="top__nav">
               <Link href="/bul">Bulucu</Link>
@@ -44,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="foot">
           <div className="wrap foot__grid">
             <div className="foot__brand">
-              <span className="logo">parfüm<em>bilgisi</em></span>
+              <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa"><Logo small /></Link>
               <p>Türkçe parfüm ansiklopedisi. Notalar, akorlar ve koku aileleri; reklamsız ve hızlı.</p>
             </div>
             <nav aria-label="Keşfet">

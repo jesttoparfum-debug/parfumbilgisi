@@ -28,7 +28,7 @@ export default async function Home() {
     "@type": "Organization",
     name: SITE.name,
     url: SITE.url,
-    logo: `${SITE.url}/icon.svg`,
+    logo: `${SITE.url}/icon-512.png`,
     email: "parfumbilgisi@gmail.com",
   }, {
     "@context": "https://schema.org",
