@@ -3,7 +3,8 @@ import SearchForm from "@/components/SearchForm";
 import { Grid } from "@/components/PerfumeCard";
 import Pager, { readPage } from "@/components/Pager";
 import Link from "next/link";
-import { matchingBrands, searchPerfumes } from "@/lib/data";
+import { after } from "next/server";
+import { logMiss, matchingBrands, searchPerfumes } from "@/lib/data";
 import { GENDERS, nf } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -28,6 +29,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const brands = q && page === 1 ? await matchingBrands(q).catch(() => []) : [];
   const items = result?.items ?? [];
   const hasNext = result?.hasNext ?? false;
+  // Sonuç çıkmayan gerçek aramaları (ilk sayfa, sunucu hatası değil) yönetim listesine yaz
+  if (result !== null && q.length >= 3 && page === 1 && items.length === 0 && brands.length === 0) {
+    after(() => logMiss(q));
+  }
   const params: Record<string, string> = {};
   if (q) params.q = q;
   if (gender) params.cinsiyet = gender;

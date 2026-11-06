@@ -18,7 +18,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   return {
     rules: [
       // Arama motorları: her şey açık (arama ve bulucu sonuçları hariç, onlar zaten noindex)
-      { userAgent: "*", allow: "/", disallow: ["/ara", "/bul?"] },
+      { userAgent: "*", allow: "/", disallow: ["/ara", "/bul?", "/yonetim"] },
       { userAgent: YASAK_BOTLAR, disallow: "/" },
     ],
     sitemap: Array.from({ length: n }, (_, i) => `${SITE.url}/sitemap/${i}.xml`),

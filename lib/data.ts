@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { db } from "./supabase";
 import { fold, imageUrl, slugify } from "./format";
 
@@ -371,4 +372,22 @@ export async function getAllBrandSlugs() {
     if (data.length < 1000) break;
   }
   return out;
+}
+
+/** Sonuç çıkmayan aramayı kaydeder. Anahtar yoksa ya da hata olursa sessizce vazgeçer. */
+export async function logMiss(q: string): Promise<void> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) return;
+  // Yalnızca parfüm adına benzeyen kısa metinler (bot çöpü tabloyu doldurmasın)
+  if (q.length > 60 || !/^[\p{L}\p{N} '’.&-]+$/u.test(q)) return;
+  try {
+    const c = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { fetch: (i, init) => fetch(i, { ...init, cache: "no-store" }) },
+    });
+    await c.rpc("log_miss", { p_q: q });
+  } catch {
+    /* kayıt tutulamadıysa kullanıcıya yansımasın */
+  }
 }
