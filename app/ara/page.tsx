@@ -18,7 +18,14 @@ export default async function SearchPage({ searchParams }: Props) {
   const gender = sp.cinsiyet && sp.cinsiyet in GENDERS ? sp.cinsiyet : null;
   const page = readPage(sp.sayfa, 40);
 
-  const { items, hasNext } = await searchPerfumes(q, gender, page);
+  let result: Awaited<ReturnType<typeof searchPerfumes>> | null = null;
+  try {
+    result = await searchPerfumes(q, gender, page);
+  } catch (e) {
+    console.error("arama hatasi", e);
+  }
+  const items = result?.items ?? [];
+  const hasNext = result?.hasNext ?? false;
   const params: Record<string, string> = {};
   if (q) params.q = q;
   if (gender) params.cinsiyet = gender;
@@ -29,7 +36,9 @@ export default async function SearchPage({ searchParams }: Props) {
         <h1>{q ? <>“{q}” için sonuçlar</> : "Parfüm ara"}</h1>
       </header>
       <SearchForm q={q} gender={gender ?? ""} />
-      {items.length === 0 ? (
+      {result === null ? (
+        <p className="empty">Arama şu an yapılamadı. Birkaç saniye sonra tekrar dene.</p>
+      ) : items.length === 0 ? (
         <p className="empty">
           Sonuç bulunamadı. Daha kısa bir kelime ya da sadece marka adı dene.
         </p>

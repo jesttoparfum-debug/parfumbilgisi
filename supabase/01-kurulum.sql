@@ -92,6 +92,7 @@ create index if not exists perfumes_brand_idx   on public.perfumes (brand_slug, 
 create index if not exists perfumes_family_idx  on public.perfumes (family_slug);
 create index if not exists perfumes_notes_gin   on public.perfumes using gin (all_note_slugs);
 create index if not exists perfumes_search_trgm on public.perfumes using gin (search_text extensions.gin_trgm_ops);
+create index if not exists perfumes_search_prefix on public.perfumes (search_text text_pattern_ops);
 create index if not exists perfumes_sitemap_idx on public.perfumes (slug) where indexable;
 create index if not exists perfumes_image_idx   on public.perfumes (brand_slug) where image is not null;
 
@@ -243,7 +244,8 @@ $$;
 -- ---------------------------------------------------------------------
 -- 5) Arama (yazım hatalarını da yakalar: "savage" -> "Sauvage")
 -- ---------------------------------------------------------------------
-create or replace function public.search_perfumes(
+drop function if exists public.search_perfumes(text, text, int, int);
+create function public.search_perfumes(
   q        text default null,
   p_gender text default null,
   p_limit  int  default 24,
@@ -253,23 +255,68 @@ returns table (
   id bigint, slug text, name text, brand text, brand_slug text,
   year smallint, gender text, image text
 )
-language sql
+language plpgsql
 stable
 set search_path = public, extensions
+set pg_trgm.similarity_threshold = 0.25
 as $$
-  with term as (
-    select lower(extensions.unaccent(left(btrim(coalesce(q, '')), 80))) as t
-  )
-  select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image
-  from public.perfumes p, term
-  where (term.t = '' or p.search_text % term.t or p.search_text like '%' || term.t || '%')
-    and (p_gender is null or p.gender = p_gender)
-  order by
-    case when term.t = '' then 0 else extensions.similarity(p.search_text, term.t) end desc,
-    p.indexable desc,
-    p.name
-  limit  least(greatest(p_limit, 1), 50)
-  offset least(greatest(p_offset, 0), 1000);
+declare
+  t   text := lower(extensions.unaccent(left(btrim(coalesce(q, '')), 80)));
+  lim int  := least(greatest(p_limit, 1), 50);
+  off int  := least(greatest(p_offset, 0), 1000);
+  n   int;
+begin
+  -- Her sorgu index kullanır ve en fazla 2000 aday üzerinde sıralar (veri büyüse de hızlı).
+  if t = '' then
+    return query
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image
+      from public.perfumes p
+      where p.indexable and (p_gender is null or p.gender = p_gender)
+      order by p.id
+      limit lim offset off;
+    return;
+  end if;
+
+  if length(t) < 3 then
+    -- 1-2 harf: baş harf eşleşmesi (b-tree index sırasıyla)
+    return query
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image
+      from public.perfumes p
+      where p.search_text like t || '%' and (p_gender is null or p.gender = p_gender)
+      order by p.search_text
+      limit lim offset off;
+    return;
+  end if;
+
+  -- 1) İçinde geçenler ("kirke", "dior", "pour homme")
+  return query
+    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image
+    from (
+      select p.*
+      from public.perfumes p
+      where p.search_text like '%' || t || '%' and (p_gender is null or p.gender = p_gender)
+      limit 2000
+    ) c
+    order by (c.search_text like t || '%' or c.search_text like '% ' || t || '%') desc,
+             c.indexable desc,
+             extensions.similarity(c.search_text, t) desc,
+             c.name
+    limit lim offset off;
+  get diagnostics n = row_count;
+  if n > 0 or off > 0 then return; end if;
+
+  -- 2) Hiç yoksa yazım hatası toleranslı benzerlik ("savage" -> "sauvage")
+  return query
+    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image
+    from (
+      select p.*
+      from public.perfumes p
+      where p.search_text % t and (p_gender is null or p.gender = p_gender)
+      limit 2000
+    ) c
+    order by extensions.similarity(c.search_text, t) desc, c.indexable desc
+    limit lim;
+end
 $$;
 
 -- ---------------------------------------------------------------------
