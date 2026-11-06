@@ -5,7 +5,7 @@ import Bottle from "@/components/Bottle";
 import { Grid } from "@/components/PerfumeCard";
 import { getPerfume, getSameBrand, getSimilar } from "@/lib/data";
 import { accordColor } from "@/lib/accords";
-import { describe, metaDescription } from "@/lib/describe";
+import { describe, describeSections, metaDescription } from "@/lib/describe";
 import { genderLabel, imageUrl, jsonLd, SITE, slugify } from "@/lib/format";
 
 // Sayfalar ilk ziyarette üretilip 1 gün cache'lenir (ISR); build'de 200 bin sayfa üretilmez.
@@ -74,6 +74,7 @@ export default async function PerfumePage({ params }: Props) {
   if (p.year) facts.push(["Çıkış yılı", String(p.year)]);
 
   const about = describe(p);
+  const sections = describeSections(p);
   const img = imageUrl(p.image);
   const ld = [
     {
@@ -112,7 +113,10 @@ export default async function PerfumePage({ params }: Props) {
           <Link href={`/marka/${p.brand_slug}`} className="perfume__brand" lang="en">
             {p.brand}
           </Link>
-          <h1>{p.name}</h1>
+          <h1>
+            <span className="sr-only" lang="en">{p.brand} </span>
+            {p.name}
+          </h1>
           {facts.length > 0 && (
             <dl className="facts">
               {facts.map(([k, v]) => (
@@ -163,8 +167,14 @@ export default async function PerfumePage({ params }: Props) {
       </div>
 
       <section className="block">
-        <h2>Hakkında</h2>
-        <p className="prose">{about.join(" ")}</p>
+        <h2>
+          <span lang="en">{fullName(p)}</span> hakkında
+        </h2>
+        <div className="prose">
+          {sections.paragraphs.map((t, i) => (
+            <p key={i}>{t}</p>
+          ))}
+        </div>
       </section>
 
       {tiers.length > 0 && (
@@ -180,6 +190,20 @@ export default async function PerfumePage({ params }: Props) {
               </div>
             ))}
           </div>
+        </section>
+      )}
+
+      {sections.faq.length > 0 && (
+        <section className="block">
+          <h2>Sık sorulan sorular</h2>
+          <dl className="faq">
+            {sections.faq.map((f) => (
+              <div key={f.q}>
+                <dt>{f.q}</dt>
+                <dd>{f.a}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       )}
 
