@@ -40,7 +40,7 @@ function Logo({ small = false }: { small?: boolean }) {
       <img
         src="/logo-light.png"
         alt="Parfüm Bilgisi"
-        width={small ? 143 : 108}
+        width={small ? 138 : 103}
         height={small ? 56 : 42}
         className={small ? "logo__img logo__img--lg" : "logo__img"}
       />
@@ -59,7 +59,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Logo />
             </Link>
             <nav className="top__nav">
-              <Link href="/bul">Bulucu</Link>
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
               <Link href="/ara" className="top__search">Ara</Link>
@@ -71,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="wrap foot__grid">
             <div className="foot__brand">
               <Link href="/" className="logo" aria-label="Parfüm Bilgisi ana sayfa"><Logo small /></Link>
-              <p>Türkçe parfüm ansiklopedisi. Notalar, akorlar ve koku aileleri; reklamsız ve hızlı.</p>
+              <p>Sevdiğin kokunun notalarını, akorlarını ve ailesini keşfet. Reklamsız, hızlı, sade.</p>
             </div>
             <nav aria-label="Keşfet">
               <h2 className="foot__h">Keşfet</h2>

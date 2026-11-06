@@ -47,12 +47,12 @@ export default async function Home() {
     <>
       <section className="hero">
         <div className="wrap">
-          <p className="eyebrow">Türkçe parfüm ansiklopedisi</p>
+          <p className="eyebrow">Koku rehberin</p>
           <h1>
-            Her parfümün <em>notaları</em>, tek yerde.
+            Aradığın kokuyu <em>notalarından</em> bul.
           </h1>
           <p className="lead">
-            Üst, orta ve alt notalar, akorlar ve koku aileleri. Reklamsız, hızlı, sade.
+            Yazmaya başla: parfümü, markayı ya da sevdiğin notayı bulalım. Üst, orta ve alt notalar, akorlar, koku aileleri; reklamsız ve hızlı.
           </p>
           <SearchForm large />
           <p className="popular">
