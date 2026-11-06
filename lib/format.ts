@@ -1,0 +1,57 @@
+export const SITE = {
+  name: "Parfüm Bilgisi",
+  url: "https://parfumbilgisi.com",
+  description:
+    "Binlerce parfümün üst, orta ve alt notaları, akorları ve koku aileleri. Türkçe parfüm ansiklopedisi.",
+};
+
+/*
+ * Veritabanındaki public.slugify() ile BİREBİR aynı kural.
+ * Değiştirirsen supabase/01-kurulum.sql içindekini de aynı şekilde değiştir.
+ */
+const FROM = "çÇğĞıöÖşŞüÜâÂîÎûÛéÉèÈêÊëËáÁàÀäÄãÃåÅíÍìÌïÏóÓòÒõÕôÔúÚùÙñÑýÝÿŸøØæÆœŒßİ";
+const TO = "cCgGioOsSuUaAiIuUeEeEeEeEaAaAaAaAaAiIiIiIoOoOoOoOuUuUnNyYyYoOaAoOsi";
+const MAP = new Map([...FROM].map((c, i) => [c, TO[i]]));
+
+export function slugify(t: string): string {
+  return [...t]
+    .map((c) => MAP.get(c) ?? c)
+    .join("")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export const GENDERS: Record<string, string> = {
+  kadin: "Kadın",
+  erkek: "Erkek",
+  unisex: "Unisex",
+};
+export const genderLabel = (g: string | null) => (g ? GENDERS[g] ?? null : null);
+
+export const nf = new Intl.NumberFormat("tr-TR");
+
+/** Supabase Storage'daki görselin herkese açık adresi. */
+export function imageUrl(file: string | null): string | null {
+  if (!file) return null;
+  const base = process.env.SUPABASE_URL;
+  if (!base) return null;
+  return `${base}/storage/v1/object/public/parfum/${encodeURIComponent(file)}`;
+}
+
+/** Marka adından sabit bir renk tonu (görselsiz parfümler için). */
+export function hueOf(text: string): number {
+  let h = 0;
+  for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+export function initials(brand: string | null, name: string): string {
+  const src = (brand || name).replace(/[^\p{L}\p{N} ]/gu, " ").trim();
+  const words = src.split(/\s+/).filter(Boolean);
+  const s = words.length > 1 ? words[0][0] + words[1][0] : src.slice(0, 2);
+  return s.toLocaleUpperCase("tr-TR");
+}
+
+/** JSON-LD'yi güvenli şekilde sayfaya gömmek için. */
+export const jsonLd = (o: unknown) => ({ __html: JSON.stringify(o).replace(/</g, "\\u003c") });
