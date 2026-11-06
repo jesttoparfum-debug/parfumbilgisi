@@ -215,8 +215,9 @@ export async function getStats() {
   const [p, b, n] = await Promise.all([
     db().from("perfumes").select("id", { count: "estimated", head: true }),
     // Özet tablolar küçük: kesin sayım hızlı. (Tahmini sayım, yeni yenilenmiş tabloda 0 dönebiliyor.)
-    db().from("brands_mv").select("brand_slug", { count: "exact", head: true }),
-    db().from("notes_mv").select("slug", { count: "exact", head: true }),
+    // .gt(...) filtresi: eski (boşken önbelleğe alınmış) 0 sonucunu atlayıp taze sayım yapar.
+    db().from("brands_mv").select("brand_slug", { count: "exact", head: true }).gt("perfume_count", 0),
+    db().from("notes_mv").select("slug", { count: "exact", head: true }).gt("perfume_count", 0),
   ]);
   return { perfumes: p.count ?? 0, brands: b.count ?? 0, notes: n.count ?? 0 };
 }
