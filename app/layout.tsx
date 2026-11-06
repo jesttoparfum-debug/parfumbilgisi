@@ -64,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="top__nav">
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
+              <Link href="/rehber">Rehber</Link>
               <Link href="/ara" className="top__search">Ara</Link>
             </nav>
           </div>
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/bul">Koku Bulucu</Link>
               <Link href="/notalar">Notalar</Link>
               <Link href="/markalar">Markalar</Link>
+              <Link href="/rehber">Rehber</Link>
               <Link href="/ara">Ara</Link>
             </nav>
             <nav aria-label="Bilgi">
