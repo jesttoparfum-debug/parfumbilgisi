@@ -27,14 +27,15 @@ export default async function NotePage({ params, searchParams }: Props) {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const n = await getNote(slug);
   if (!n) notFound();
-  const maxPage = Math.max(1, Math.ceil(n.perfume_count / PAGE_SIZE));
+  // En yoğun 400 sayfa (9.600 parfüm) gösterilir; daha derini kimse gezmez.
+  const maxPage = Math.min(400, Math.max(1, Math.ceil(n.perfume_count / PAGE_SIZE)));
   const page = readPage(sp.sayfa, maxPage);
   return (
     <HubPage
       eyebrow="Nota"
       title={n.name}
       count={n.perfume_count}
-      intro={`${nf.format(n.perfume_count)} parfümde ${n.name} notası var.`}
+      intro={`${nf.format(n.perfume_count)} parfümde ${n.name} notası var. ${n.name} notasının en yoğun hissedildiği parfümler en üstte.`}
       crumbs={[["/notalar", "Notalar"]]}
       items={await getNotePerfumes(n.slug, page)}
       base={`/nota/${n.slug}`}

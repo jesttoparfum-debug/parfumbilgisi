@@ -106,7 +106,7 @@ export default async function PerfumePage({ params }: Props) {
       </nav>
 
       <div className="perfume__top">
-        <Bottle name={p.name} brand={p.brand} image={p.image} size="hero" priority />
+        <Bottle name={p.name} brand={p.brand} image={p.image} family={p.family} slug={p.slug} size="hero" priority />
         <div className="perfume__intro">
           <Link href={`/marka/${p.brand_slug}`} className="perfume__brand" lang="en">
             {p.brand}

@@ -96,6 +96,11 @@ create index if not exists perfumes_search_prefix on public.perfumes (search_tex
 create index if not exists perfumes_sitemap_idx on public.perfumes (slug) where indexable;
 create index if not exists perfumes_image_idx   on public.perfumes (brand_slug) where image is not null;
 
+-- Zenginleştirme için geçici tablo (yıl/parfümör; sadece BOŞ alanları doldurur)
+create table if not exists public.staging_enrich (
+  slug text, year text, perfumers text, concentration text
+);
+
 -- Yükleme için geçici tablo (CSV buraya gelir, sonra temizlenip ana tabloya aktarılır)
 create table if not exists public.staging_perfumes (
   slug text, name text, brand text, gender text, release_year text, perfumers text,
@@ -171,6 +176,30 @@ begin
 end
 $$;
 
+create or replace function public.zenginlestir_uygula()
+returns text
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare adet int;
+begin
+  update public.perfumes p
+     set year = coalesce(p.year,
+                  case when btrim(e.year) ~ '^\d{4}$' then btrim(e.year)::smallint end),
+         perfumers = case when cardinality(p.perfumers) = 0 then public.j2a(e.perfumers)
+                          else p.perfumers end,
+         updated_at = now()
+    from public.staging_enrich e
+   where e.slug = p.slug
+     and ((p.year is null and btrim(e.year) ~ '^\d{4}$')
+       or (cardinality(p.perfumers) = 0 and cardinality(public.j2a(e.perfumers)) > 0));
+  get diagnostics adet = row_count;
+  truncate public.staging_enrich;
+  return adet || ' parfum zenginlestirildi';
+end
+$$;
+
 create or replace function public.yukle_staging()
 returns text
 language plpgsql
@@ -222,7 +251,9 @@ begin
   ) x
   on conflict (slug) do update set
     name = excluded.name, brand = excluded.brand, brand_slug = excluded.brand_slug,
-    gender = excluded.gender, year = excluded.year, perfumers = excluded.perfumers,
+    gender = excluded.gender,
+    year = coalesce(excluded.year, p.year),
+    perfumers = case when cardinality(excluded.perfumers) > 0 then excluded.perfumers else p.perfumers end,
     top_notes = excluded.top_notes, heart_notes = excluded.heart_notes, base_notes = excluded.base_notes,
     all_note_slugs = excluded.all_note_slugs, accords = excluded.accords,
     family = excluded.family, family_slug = excluded.family_slug, season = excluded.season,
@@ -236,6 +267,7 @@ begin
   refresh materialized view public.brands_mv;
   refresh materialized view public.notes_mv;
   refresh materialized view public.families_mv;
+  refresh materialized view public.note_rank_mv;
   analyze public.perfumes;
   return adet || ' parfum yuklendi/guncellendi';
 end
@@ -253,7 +285,7 @@ create function public.search_perfumes(
 )
 returns table (
   id bigint, slug text, name text, brand text, brand_slug text,
-  year smallint, gender text, image text
+  year smallint, gender text, image text, family text
 )
 language plpgsql
 stable
@@ -268,7 +300,7 @@ begin
   -- Her sorgu index kullanır ve en fazla 2000 aday üzerinde sıralar (veri büyüse de hızlı).
   if t = '' then
     return query
-      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image, p.family
       from public.perfumes p
       where p.indexable and (p_gender is null or p.gender = p_gender)
       order by p.id
@@ -279,7 +311,7 @@ begin
   if length(t) < 3 then
     -- 1-2 harf: baş harf eşleşmesi (b-tree index sırasıyla)
     return query
-      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image
+      select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image, p.family
       from public.perfumes p
       where p.search_text like t || '%' and (p_gender is null or p.gender = p_gender)
       order by p.search_text
@@ -289,7 +321,7 @@ begin
 
   -- 1) İçinde geçenler ("kirke", "dior", "pour homme")
   return query
-    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image
+    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image, c.family
     from (
       select p.*
       from public.perfumes p
@@ -306,7 +338,7 @@ begin
 
   -- 2) Hiç yoksa yazım hatası toleranslı benzerlik ("savage" -> "sauvage")
   return query
-    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image
+    select c.id, c.slug, c.name, c.brand, c.brand_slug, c.year, c.gender, c.image, c.family
     from (
       select p.*
       from public.perfumes p
@@ -316,6 +348,61 @@ begin
     order by extensions.similarity(c.search_text, t) desc, c.indexable desc
     limit lim;
 end
+$$;
+
+-- ---------------------------------------------------------------------
+-- 5b) Nota sayfası: o notanın EN BASKIN olduğu parfümler önce.
+--     Puanlar yüklemede bir kez hesaplanır; sayfa sadece hazır listeyi okur.
+-- ---------------------------------------------------------------------
+begin;
+set local statement_timeout = 0;  -- bu liste büyük, hesaplanması 1-2 dakika sürebilir
+drop materialized view if exists public.note_rank_mv;
+create materialized view public.note_rank_mv as
+  select ns.slug as note_slug,
+         p.id    as perfume_id,
+         (
+           -- 1) Aynı isimli akorun gücü (0-100) — en güçlü sinyal
+           coalesce((select max((a->>'value')::numeric)
+                     from jsonb_array_elements(p.accords) a
+                     where public.slugify(a->>'name') = ns.slug
+                        or ns.slug like public.slugify(a->>'name') || '-%'
+                        or ns.slug like '%-' || public.slugify(a->>'name')), 0)
+           -- 2) Kaç katmanda geçiyor (her katman +12)
+           + 12 * ( (exists (select 1 from unnest(p.top_notes)   n where public.slugify(n) = ns.slug))::int
+                  + (exists (select 1 from unnest(p.heart_notes) n where public.slugify(n) = ns.slug))::int
+                  + (exists (select 1 from unnest(p.base_notes)  n where public.slugify(n) = ns.slug))::int )
+           -- 3) Az notalı parfümde nota daha belirgin
+           + 120.0 / greatest(cardinality(p.all_note_slugs), 1)
+           -- 4) Dolu ve görselli kayıtlar biraz önde
+           + case when p.indexable then 8 else 0 end
+           + case when p.image is not null then 5 else 0 end
+         )::smallint as score
+  from public.perfumes p
+  cross join lateral unnest(p.all_note_slugs) as ns(slug);
+create        index note_rank_ord on public.note_rank_mv (note_slug, score desc, perfume_id);
+commit;
+
+drop function if exists public.note_perfumes(text, int, int);
+create function public.note_perfumes(
+  p_slug   text,
+  p_limit  int default 24,
+  p_offset int default 0
+)
+returns table (
+  id bigint, slug text, name text, brand text, brand_slug text,
+  year smallint, gender text, image text, family text
+)
+language sql
+stable
+set search_path = public, extensions
+as $$
+  select p.id, p.slug, p.name, p.brand, p.brand_slug, p.year, p.gender, p.image, p.family
+  from public.note_rank_mv r
+  join public.perfumes p on p.id = r.perfume_id
+  where r.note_slug = p_slug
+  order by r.score desc, r.perfume_id
+  limit  least(greatest(p_limit, 1), 50)
+  offset least(greatest(p_offset, 0), 10000);
 $$;
 
 -- ---------------------------------------------------------------------
@@ -332,24 +419,28 @@ on conflict (id) do update set public = true,
 -- ---------------------------------------------------------------------
 alter table public.perfumes         enable row level security;
 alter table public.staging_perfumes enable row level security;
+alter table public.staging_enrich   enable row level security;
 
 drop policy if exists "herkes okuyabilir" on public.perfumes;
 create policy "herkes okuyabilir" on public.perfumes for select to anon using (true);
 
 grant usage on schema extensions to anon;  -- arama fonksiyonu icin (Supabase'de zaten acik)
-revoke all on public.perfumes, public.staging_perfumes from anon, authenticated;
+revoke all on public.perfumes, public.staging_perfumes, public.staging_enrich from anon, authenticated;
 grant select on public.perfumes to anon;
 
-revoke all on public.brands_mv, public.notes_mv, public.families_mv from anon, authenticated;
-grant select on public.brands_mv, public.notes_mv, public.families_mv to anon;
+revoke all on public.brands_mv, public.notes_mv, public.families_mv, public.note_rank_mv from anon, authenticated;
+grant select on public.brands_mv, public.notes_mv, public.families_mv, public.note_rank_mv to anon;
 
 revoke all on function public.yukle_staging() from public, anon, authenticated;
 revoke all on function public.cinsiyet_tamamla() from public, anon, authenticated;
+revoke all on function public.zenginlestir_uygula() from public, anon, authenticated;
 revoke all on function public.j2a(text)       from public, anon, authenticated;
 revoke all on function public.j2j(text)       from public, anon, authenticated;
 revoke all on function public.slugify(text)   from anon, authenticated;
 revoke all on function public.search_perfumes(text, text, int, int) from public;
 grant execute on function public.search_perfumes(text, text, int, int) to anon;
+revoke all on function public.note_perfumes(text, int, int) from public;
+grant execute on function public.note_perfumes(text, int, int) to anon;
 
 -- API katmanının fonksiyon/tablo listesini yenile
 notify pgrst, 'reload schema';

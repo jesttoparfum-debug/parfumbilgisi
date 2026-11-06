@@ -7,7 +7,7 @@ export default function PerfumeCard({ p }: { p: P }) {
   const meta = [p.year, genderLabel(p.gender)].filter(Boolean).join(" · ");
   return (
     <Link href={`/parfum/${p.slug}`} className="card">
-      <Bottle name={p.name} brand={p.brand} image={p.image} />
+      <Bottle name={p.name} brand={p.brand} image={p.image} family={p.family} slug={p.slug} />
       <div className="card__body">
         <span className="card__brand" lang="en">{p.brand}</span>
         <span className="card__name">{p.name}</span>

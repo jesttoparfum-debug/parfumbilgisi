@@ -11,6 +11,7 @@ export type PerfumeCard = {
   year: number | null;
   gender: string | null;
   image: string | null;
+  family: string | null;
 };
 
 export type Accord = { name: string; value: number };
@@ -21,7 +22,6 @@ export type Perfume = PerfumeCard & {
   heart_notes: string[];
   base_notes: string[];
   accords: Accord[];
-  family: string | null;
   family_slug: string | null;
   season: string | null;
   indexable: boolean;
@@ -30,7 +30,7 @@ export type Perfume = PerfumeCard & {
 export type Hub = { slug: string; name: string; perfume_count: number };
 export type Brand = { brand_slug: string; brand: string; perfume_count: number };
 
-const CARD = "id,slug,name,brand,brand_slug,year,gender,image";
+const CARD = "id,slug,name,brand,brand_slug,year,gender,image,family";
 export const PAGE_SIZE = 24;
 
 /** URL'den gelen slug'ı veritabanına gitmeden doğrula. */
@@ -123,14 +123,13 @@ export const getNote = cache(async (slug: string): Promise<Hub | null> => {
 });
 
 export async function getNotePerfumes(slug: string, page: number) {
-  const [a, b] = range(page);
-  const { data } = await db()
-    .from("perfumes")
-    .select(CARD)
-    .contains("all_note_slugs", [slug])
-    .order("indexable", { ascending: false })
-    .order("name")
-    .range(a, b);
+  // Notanın en baskın olduğu parfümler önce (puanlar veritabanında önceden hesaplı)
+  const { data, error } = await db().rpc("note_perfumes", {
+    p_slug: slug,
+    p_limit: PAGE_SIZE,
+    p_offset: (page - 1) * PAGE_SIZE,
+  });
+  if (error) throw error;
   return cards(data);
 }
 

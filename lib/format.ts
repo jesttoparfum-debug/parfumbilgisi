@@ -47,10 +47,10 @@ export function hueOf(text: string): number {
 }
 
 export function initials(brand: string | null, name: string): string {
-  const src = (brand || name).replace(/[^\p{L}\p{N} ]/gu, " ").trim();
-  const words = src.split(/\s+/).filter(Boolean);
-  const s = words.length > 1 ? words[0][0] + words[1][0] : src.slice(0, 2);
-  return s.toLocaleUpperCase("tr-TR");
+  // "Tom Ford" -> "TF", "Dior" -> "D" (tek kelimede tek harf daha zarif durur)
+  const words = (brand || name).replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).filter(Boolean);
+  const s = words.length > 1 ? words[0][0] + words[1][0] : (words[0]?.[0] ?? "");
+  return s.toUpperCase();
 }
 
 /** JSON-LD'yi güvenli şekilde sayfaya gömmek için. */
