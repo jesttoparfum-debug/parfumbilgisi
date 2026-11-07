@@ -141,21 +141,6 @@ export default async function GuidePage({ params }: Props) {
         </section>
       )}
 
-      <section className="article__src">
-        <h2 className="mini-h">Kaynaklar</h2>
-        <p>
-          Bu yazı, aşağıdaki açık kaynaklardan doğrulanan bilgilerden yararlanılarak Parfüm Bilgisi tarafından kendi
-          cümlelerimizle yazılmıştır. Rakamlar kaynaktan kaynağa birkaç puan değişebilir.
-        </p>
-        <ul>
-          {g.sources.map((s) => (
-            <li key={s.url}>
-              <a href={s.url} rel="noopener nofollow" target="_blank">{s.title}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(ld)} />
     </article>
   );
