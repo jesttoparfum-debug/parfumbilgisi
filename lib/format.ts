@@ -31,9 +31,15 @@ export const genderLabel = (g: string | null) => (g ? GENDERS[g] ?? null : null)
 
 export const nf = new Intl.NumberFormat("tr-TR");
 
-/** Supabase Storage'daki görselin herkese açık adresi. */
+/**
+ * Görselin herkese açık adresi.
+ * IMAGE_BASE_URL tanımlıysa (örn. https://gorsel.parfumbilgisi.com, Cloudflare R2) oradan,
+ * değilse Supabase Storage'dan sunulur. Dosyalar R2'ye taşınmadan IMAGE_BASE_URL tanımlanmamalı.
+ */
 export function imageUrl(file: string | null): string | null {
   if (!file) return null;
+  const cdn = process.env.IMAGE_BASE_URL?.replace(/\/+$/, "");
+  if (cdn) return `${cdn}/${encodeURIComponent(file)}`;
   const base = process.env.SUPABASE_URL;
   if (!base) return null;
   return `${base}/storage/v1/object/public/parfum/${encodeURIComponent(file)}`;

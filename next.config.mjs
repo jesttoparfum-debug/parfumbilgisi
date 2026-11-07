@@ -4,8 +4,8 @@ const csp = [
   // Next.js satır içi başlangıç script'i için 'unsafe-inline' gerekli; dış script yok.
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  // Görseller sadece kendi Supabase depomuzdan gelir.
-  "img-src 'self' data: https://*.supabase.co",
+  // Görseller sadece kendi depolarımızdan gelir: Supabase Storage ve Cloudflare R2 (gorsel alt alan adı).
+  "img-src 'self' data: https://*.supabase.co https://gorsel.parfumbilgisi.com",
   "font-src 'self'",
   "connect-src 'self'",
   "frame-ancestors 'none'",
